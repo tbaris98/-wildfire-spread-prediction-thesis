@@ -80,8 +80,21 @@ print('Saved:', comparison_path)
 confusion_path = os.path.join(figures_dir, 'fig_confusion_matrix.png')
 breakdown_path = os.path.join(figures_dir, 'fig_error_breakdown.png')
 
+# Explicitly extract Random Forest data (not leftover loop variables)
+rf_cm = cm_dict.get('RandomForest')
+if rf_cm is not None:
+    TN_rf = rf_cm[0, 0]
+    FP_rf = rf_cm[0, 1]
+    FN_rf = rf_cm[1, 0]
+    TP_rf = rf_cm[1, 1]
+    print(f'DEBUG: Using RandomForest from cm_dict: TN={TN_rf}, FP={FP_rf}, FN={FN_rf}, TP={TP_rf}')
+else:
+    # Fallback if RandomForest not in dict
+    TN_rf, FP_rf, FN_rf, TP_rf = TN, FP, FN, TP
+    print(f'DEBUG: RandomForest not in cm_dict, using fallback: TN={TN_rf}, FP={FP_rf}, FN={FN_rf}, TP={TP_rf}')
+
 # Confusion matrix array
-cm = np.array([[TN, FP], [FN, TP]])
+cm = np.array([[TN_rf, FP_rf], [FN_rf, TP_rf]])
 cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
 
 # Plot heatmap (counts with normalized percentages)
@@ -102,7 +115,7 @@ plt.close()
 
 # Error breakdown bar chart: show TP, TN, FP, FN counts and percentages
 labels = ['True Positive (TP)', 'True Negative (TN)', 'False Positive (FP)', 'False Negative (FN)']
-counts = [TP, TN, FP, FN]
+counts = [TP_rf, TN_rf, FP_rf, FN_rf]
 percent = [c / sum(counts) for c in counts]
 
 plt.figure(figsize=(8,4))

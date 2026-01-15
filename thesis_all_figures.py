@@ -228,7 +228,7 @@ for method in ['ensemble', 'tree_based', 'rfe', 'mutual_info', 'l1_regularizatio
 # --- Model Stability: Std Dev/Error Bars for AUC/F1 ---
 if os.path.exists(cv_results_path):
     plt.figure(figsize=(14,8))
-    ax = sns.barplot(x='algorithm', y='spatial_auc_mean', hue='configuration', data=cv_df, ci='sd', palette='Set2')
+    ax = sns.barplot(x='algorithm', y='spatial_auc_mean', hue='configuration', data=cv_df, errorbar='sd', palette='Set2')
     plt.title('Model Stability: AUC by Algorithm and Configuration')
     plt.ylabel('Spatial AUC (mean)')
     plt.xlabel('Algorithm')
@@ -250,6 +250,7 @@ if os.path.exists(cv_results_path):
     ax.set_xticklabels(ax.get_xticks(), rotation=60, ha='right', va='top', fontsize=12)
     # Move legend outside plot area in white space and make it smaller
     handles, labels = ax.get_legend_handles_labels()
+    ax.get_legend().remove()  # Remove the legend from inside the plot
     legend = fig.legend(handles, labels, loc='center right', bbox_to_anchor=(1.18, 0.5), fontsize=10, frameon=True)
     # Move description outside plot area
     fig.text(0.5, 0.01, 'Algorithm: RandomForest, XGBoost, CatBoost, LightGBM; Configurations: hard_negative, random_negative', ha='center', va='bottom', fontsize=11, wrap=True)
@@ -261,6 +262,7 @@ TREE_SELECTED_PATH = 'feature_selection/selected_features_tree_based.csv'
 ENSEMBLE_SELECTED_PATH = 'feature_selection/selected_features_ensemble.csv'
 TREE_IMPORTANCE_PATH = 'feature_selection/feature_importance_tree_based.csv'
 ENSEMBLE_IMPORTANCE_PATH = 'feature_selection/feature_importance_ensemble.csv'
+ENSEMBLE_PATH = ENSEMBLE_SELECTED_PATH
 if all(os.path.exists(p) for p in [TREE_SELECTED_PATH, ENSEMBLE_SELECTED_PATH, TREE_IMPORTANCE_PATH, ENSEMBLE_IMPORTANCE_PATH]):
     tree_sel = pd.read_csv(TREE_SELECTED_PATH)
     ensemble_sel = pd.read_csv(ENSEMBLE_SELECTED_PATH)
@@ -362,7 +364,7 @@ if os.path.exists(ENSEMBLE_SELECTED_PATH):
     else:
         top20 = df.head(20)
         plt.figure(figsize=(10, 7))
-        ax = sns.barplot(y='feature', x=range(1, len(top20)+1), data=top20, palette='viridis', legend=False)
+        ax = sns.barplot(y='feature', x=range(1, len(top20)+1), data=top20, hue='feature', palette='viridis', legend=False)
         plt.title('Top 20 Selected Features (Leakage Excluded)')
         plt.xlabel('Feature Rank')
         plt.ylabel('Feature')
@@ -374,7 +376,7 @@ if os.path.exists(ENSEMBLE_SELECTED_PATH):
     if 'category' in df.columns and df['category'].notna().any():
         category_counts = df['category'].value_counts()
         plt.figure(figsize=(8, 5))
-        sns.barplot(x=category_counts.index, y=category_counts.values, palette='mako')
+        sns.barplot(x=category_counts.index, y=category_counts.values, hue=category_counts.index, palette='mako', legend=False)
         plt.title('Selected Features by Category (Leakage Excluded)')
         plt.xlabel('Category')
         plt.ylabel('Number of Features')
@@ -498,3 +500,8 @@ import sys
 sys.path.append('github')
 import create_confusion_figures
 # This script runs on import and saves figures automatically
+
+# --- Spatial CV Summary Figures (Top 10 Configurations) ---
+import github.create_spatial_cv_summary_figures as cv_summary
+# This generates the Top 10 Configurations bar chart
+# Note: Algorithm comparison already generated above as algorithm_comparison.png
