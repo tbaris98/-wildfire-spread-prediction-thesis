@@ -16,6 +16,7 @@ Author: DSS Thesis - Wildfire Prediction Framework
 Date: October 2024
 """
 
+
 import pandas as pd
 import numpy as np
 import os
@@ -25,6 +26,42 @@ import logging
 from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
+
+# --- Centralized Logging Setup ---
+LOG_DIR = Path('wildfire_results')
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f'hard_negative_fix_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode='w',
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s'
+)
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+
+# --- Pipeline Configuration Logging ---
+CONFIG_LOG = LOG_DIR / 'hard_negative_fix_config.txt'
+with open(CONFIG_LOG, 'w') as f:
+    f.write("# Hard Negative Sampling Fix & Spatial CV Configuration\n")
+    f.write(f"Run timestamp: {datetime.now().isoformat()}\n")
+    f.write("Input: corrected_hard_negative_results/\n")
+    f.write("Output: wildfire_results/ (logs, results, comparison tables)\n")
+    f.write("Key Steps: hard negative dataset creation, binary target, spatial CV, comparison\n")
+    f.write("Hyperparameters: see code for algorithm-specific settings\n")
+
+# --- Error Handling Decorator ---
+def log_exceptions(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            raise
+    return wrapper
 
 # Machine Learning
 from sklearn.model_selection import StratifiedGroupKFold, train_test_split

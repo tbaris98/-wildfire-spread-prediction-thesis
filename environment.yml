@@ -1,0 +1,19 @@
+name: wildfire_pred
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pandas>=1.3
+  - numpy>=1.21
+  - scikit-learn>=1.0
+  - matplotlib>=3.4
+  - seaborn>=0.11
+  - joblib>=1.0
+  - imbalanced-learn>=0.8
+  - shap>=0.39
+  - openpyxl>=3.0
+  - pip
+  - pip:
+      # Add any pip-only dependencies here
+      # - some-pip-only-package

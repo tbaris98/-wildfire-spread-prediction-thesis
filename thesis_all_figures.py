@@ -3,11 +3,50 @@ Thesis Figures Generation Script
 Generates all main figures for the thesis, including feature selection visualizations.
 Excludes leakage-prone features: acquisition time, FRP, brightness, confidence, scan, track.
 """
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import numpy as np
+
+# --- Centralized Logging Setup ---
+import logging
+from pathlib import Path
+LOG_DIR = Path('wildfire_results')
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f'thesis_all_figures_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.log'
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode='w',
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s'
+)
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+
+# --- Pipeline Configuration Logging ---
+CONFIG_LOG = LOG_DIR / 'thesis_all_figures_config.txt'
+with open(CONFIG_LOG, 'w') as f:
+    f.write("# Thesis All Figures Configuration\n")
+    f.write(f"Run timestamp: {pd.Timestamp.now().isoformat()}\n")
+    f.write("Input: corrected_spatial_cv_results/corrected_spatial_cv_results.csv\n")
+    f.write("Output: figures/ (all figures, logs)\n")
+    f.write("Key Steps: figure generation, feature selection visualization, algorithm comparison\n")
+    f.write("Hyperparameters: see code for plotting settings\n")
+
+# --- Error Handling Decorator ---
+def log_exceptions(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            raise
+    return wrapper
 
 # Ensure 'figures' directory exists for all saves
 os.makedirs('figures', exist_ok=True)
@@ -258,10 +297,10 @@ if os.path.exists(cv_results_path):
     plt.savefig('figures/performance_vs_n_features.png', bbox_inches='tight')
     plt.close()
 # --- Tree-based vs Ensemble Feature Comparison ---
-TREE_SELECTED_PATH = 'feature_selection/selected_features_tree_based.csv'
-ENSEMBLE_SELECTED_PATH = 'feature_selection/selected_features_ensemble.csv'
-TREE_IMPORTANCE_PATH = 'feature_selection/feature_importance_tree_based.csv'
-ENSEMBLE_IMPORTANCE_PATH = 'feature_selection/feature_importance_ensemble.csv'
+TREE_SELECTED_PATH = 'feature_selection_results/selected_features_tree_based.csv'
+ENSEMBLE_SELECTED_PATH = 'feature_selection_results/selected_features_ensemble.csv'
+TREE_IMPORTANCE_PATH = 'feature_selection_results/feature_importance_tree_based.csv'
+ENSEMBLE_IMPORTANCE_PATH = 'feature_selection_results/feature_importance_ensemble.csv'
 ENSEMBLE_PATH = ENSEMBLE_SELECTED_PATH
 if all(os.path.exists(p) for p in [TREE_SELECTED_PATH, ENSEMBLE_SELECTED_PATH, TREE_IMPORTANCE_PATH, ENSEMBLE_IMPORTANCE_PATH]):
     tree_sel = pd.read_csv(TREE_SELECTED_PATH)
@@ -482,14 +521,18 @@ metrics_df = subgroup.analyze_subgroups(full_results)
 subgroup.plot_results(metrics_df)
 
 # --- Hard Negative Sampling Figure ---
-from github.create_hard_negative_sampling_figure import create_hard_negative_comparison_figure
+import sys
+sys.path.append('github')
+from create_hard_negative_sampling_figure import create_hard_negative_comparison_figure
 create_hard_negative_comparison_figure()
 
 # --- Subgroup Analysis Figures ---
 
 # Update DATASET_PATH for subgroup analysis to correct location
-import github.run_subgroup_analysis as subgroup
-subgroup.DATASET_PATH = '/Volumes/Extreme SSD/DSS_Thesis/corrected_hard_negative_results/tree_based_random_negative_dataset.csv'
+import sys
+sys.path.append('github')
+import run_subgroup_analysis as subgroup
+subgroup.DATASET_PATH = '/home/u427312/wildfire_project/github/corrected_hard_negative_results/tree_based_random_negative_dataset.csv'
 df_subgroup = subgroup.load_data()
 full_results = subgroup.run_analysis(df_subgroup)
 metrics_df = subgroup.analyze_subgroups(full_results)
@@ -502,6 +545,8 @@ import create_confusion_figures
 # This script runs on import and saves figures automatically
 
 # --- Spatial CV Summary Figures (Top 10 Configurations) ---
-import github.create_spatial_cv_summary_figures as cv_summary
+import sys
+sys.path.append('github')
+import create_spatial_cv_summary_figures as cv_summary
 # This generates the Top 10 Configurations bar chart
 # Note: Algorithm comparison already generated above as algorithm_comparison.png

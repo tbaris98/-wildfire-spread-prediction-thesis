@@ -1,7 +1,46 @@
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+
+# --- Centralized Logging Setup ---
+import logging
+from pathlib import Path
+LOG_DIR = Path('wildfire_results')
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f'confusion_matrix_figures_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.log'
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode='w',
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s'
+)
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+
+# --- Pipeline Configuration Logging ---
+CONFIG_LOG = LOG_DIR / 'confusion_matrix_figures_config.txt'
+with open(CONFIG_LOG, 'w') as f:
+    f.write("# Confusion Matrix Figures Configuration\n")
+    f.write(f"Run timestamp: {pd.Timestamp.now().isoformat()}\n")
+    f.write("Input: corrected_spatial_cv_results/corrected_spatial_cv_confusion_matrices.csv\n")
+    f.write("Output: corrected_spatial_cv_results/confusion_matrix_figures/ (figures, logs)\n")
+    f.write("Key Steps: confusion matrix plotting, aggregation\n")
+    f.write("Hyperparameters: see code for plotting settings\n")
+
+# --- Error Handling Decorator ---
+def log_exceptions(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            raise
+    return wrapper
 
 # Path to your CSV file
 csv_path = "corrected_spatial_cv_results/corrected_spatial_cv_confusion_matrices.csv"

@@ -13,6 +13,7 @@ File: DSS Thesis - Wildfire Prediction Framework
 Date: October 2024
 """
 
+
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -24,6 +25,43 @@ import warnings
 warnings.filterwarnings('ignore')
 import os
 from datetime import datetime
+
+# --- Centralized Logging Setup ---
+import logging
+LOG_DIR = Path('wildfire_results')
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f'spatial_cv_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode='w',
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s'
+)
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+
+# --- Pipeline Configuration Logging ---
+CONFIG_LOG = LOG_DIR / 'spatial_cv_config.txt'
+with open(CONFIG_LOG, 'w') as f:
+    f.write("# Spatial CV Framework Configuration\n")
+    f.write(f"Run timestamp: {datetime.now().isoformat()}\n")
+    f.write("Input: wildfire_results/preprocessed_wildfire_data.csv\n")
+    f.write("Output: wildfire_results/ (model_hyperparameters.txt, logs, results)\n")
+    f.write("Key Steps: balanced sampling, class distribution validation, parameter tuning, robust spatial cross-validation\n")
+    f.write("Hyperparameters: see code for algorithm-specific settings\n")
+
+# --- Error Handling Decorator ---
+def log_exceptions(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            raise
+    return wrapper
 
 # Machine Learning
 from sklearn.model_selection import StratifiedGroupKFold
@@ -218,7 +256,23 @@ class BalancedSpatialCV:
         }
         
         config_type = 'balanced' if is_imbalanced else 'regular'
-        return configs[algorithm_name][config_type]
+        model = configs[algorithm_name][config_type]
+
+        # Log model hyperparameters for documentation
+        import datetime
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        try:
+            with open('wildfire_results/model_hyperparameters.txt', 'a') as f:
+                f.write(f"Model Hyperparameter Log\nTimestamp: {timestamp}\nStep: Model Initialization\nModel: {algorithm_name} ({config_type})\n")
+                if hasattr(model, 'get_params'):
+                    params = model.get_params()
+                    for k, v in params.items():
+                        f.write(f"  {k}: {v}\n")
+                f.write("\n")
+        except Exception as e:
+            print(f"⚠️  Could not write model_hyperparameters.txt: {e}")
+
+        return model
     
     def create_spatial_coordinates(self, X):
         """Create synthetic spatial coordinates"""

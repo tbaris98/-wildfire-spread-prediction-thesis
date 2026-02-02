@@ -28,6 +28,7 @@ Target: Reduce 149 → ~20 features while maintaining predictive power
 Consensus rule: Keep features selected by ≥2 methods (supported by modern literature)
 """
 
+
 import sys
 import pandas as pd
 import numpy as np
@@ -38,6 +39,43 @@ import seaborn as sns
 from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
+
+# --- Centralized Logging Setup ---
+import logging
+LOG_DIR = Path('wildfire_results')
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f'feature_selection_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.log'
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode='w',
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s'
+)
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+
+# --- Pipeline Configuration Logging ---
+CONFIG_LOG = LOG_DIR / 'feature_selection_config.txt'
+with open(CONFIG_LOG, 'w') as f:
+    f.write("# Feature Selection Framework Configuration\n")
+    f.write(f"Run timestamp: {pd.Timestamp.now().isoformat()}\n")
+    f.write("Input: wildfire_results/preprocessed_wildfire_data.csv\n")
+    f.write("Output: wildfire_results/ (selected_features, logs, summary)\n")
+    f.write("Key Steps: ensemble feature selection, consensus, reduction\n")
+    f.write("Hyperparameters: see code for method-specific settings\n")
+
+# --- Error Handling Decorator ---
+def log_exceptions(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            raise
+    return wrapper
 import os
 from datetime import datetime
 import joblib

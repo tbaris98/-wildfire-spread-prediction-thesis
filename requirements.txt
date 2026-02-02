@@ -1,0 +1,15 @@
+# DSS Wildfire Thesis - Python Requirements
+# For full reproducibility of all scripts and pipelines
+
+pandas 2.3.2
+numpy 2.3.3
+scikit-learn 1.7.2
+matplotlib 3.10.6
+seaborn 0.13.2
+joblib 1.5.2
+imblearn 0.14.0
+shap 0.48.0
+openpyxl 3.1.5
+# For logging and pathlib (standard library, but included for clarity)
+# logging
+# pathlib

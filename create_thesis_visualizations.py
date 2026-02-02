@@ -7,6 +7,7 @@ Author: Tuna Baris Unal
 Date: November 2025
 """
 
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,6 +15,43 @@ import seaborn as sns
 from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
+
+# --- Centralized Logging Setup ---
+import logging
+LOG_DIR = Path('wildfire_results')
+LOG_DIR.mkdir(exist_ok=True)
+LOG_FILE = LOG_DIR / f'thesis_visualizations_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.log'
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode='w',
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s'
+)
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+console.setFormatter(formatter)
+logging.getLogger('').addHandler(console)
+
+# --- Pipeline Configuration Logging ---
+CONFIG_LOG = LOG_DIR / 'thesis_visualizations_config.txt'
+with open(CONFIG_LOG, 'w') as f:
+    f.write("# Thesis Visualizations Configuration\n")
+    f.write(f"Run timestamp: {pd.Timestamp.now().isoformat()}\n")
+    f.write("Input: corrected_spatial_cv_results/corrected_spatial_cv_results.csv\n")
+    f.write("Output: thesis_visualizations/ (figures, logs)\n")
+    f.write("Key Steps: figure generation, results visualization\n")
+    f.write("Hyperparameters: see code for plotting settings\n")
+
+# --- Error Handling Decorator ---
+def log_exceptions(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Exception in {func.__name__}: {e}", exc_info=True)
+            raise
+    return wrapper
 
 # Set style for publication-quality figures
 plt.style.use('seaborn-v0_8-paper')
